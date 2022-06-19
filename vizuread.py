@@ -5,6 +5,8 @@ import matplotlib.pyplot as plt
 from matplotlib import cm
 import logging
 
+from get_reads import sum_as_string
+
 class ReadException(Exception):
     """base exception for the read errors"""
 
@@ -368,3 +370,6 @@ def plot_transloc(
     ax[1].set_title(f"Reads {c2}")    
     plt.suptitle(f"Reads attestant d'une translocation {c1}-{c2}")
     plt.show()
+
+if __name__ == "__main__" :
+    print(sum_as_string(1,2))
