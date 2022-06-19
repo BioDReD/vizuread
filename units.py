@@ -1,14 +1,19 @@
 import matplotlib.pyplot as plt
-from vizuread import plot_region, get_reads_from, parse_position, READ_SPACING
+from vizuread import plot_region, get_reads_from
+import logging
+
+logging.basicConfig(level=logging.INFO, format='[%(levelname)s] [%(asctime)s] [%(module)s] %(message)s', datefmt='%H:%M:%S')
+
 
 fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(27,10))
 f = "tests/ref.bam"
-plot_region(f, "chr14:105,709,976-105,710,983", ax=ax, piling="compact")
+plot_region(f, "chr14:105,709,976-105,710,983", ax=ax, piling="compact", samtools_command="samtools")
 plt.savefig("test.png")
-# plt.show()
+plt.show()
 
-reads = get_reads_from(f, "chr22:23480074-23483000")
-print([str(r) for r in reads])
+# f = "tests/sorted.bam"
+# reads = get_reads_from(f, "chr22:23480074-23483000")
+# print([str(r) for r in reads])
 
 # position = parse_position("chr22:1-100000000")
 # for r in get_reads_from(f, *position) :

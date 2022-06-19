@@ -3,7 +3,7 @@ from statistics import mean
 import subprocess as sp
 import matplotlib.pyplot as plt
 from matplotlib import cm
-
+import logging
 
 class ReadException(Exception):
     """base exception for the read errors"""
@@ -108,9 +108,21 @@ class Read():
             self.start = self.pos
             self.end = self.pos+self.length
         else :
-            self.start = self.pos-self.length
+            self.start = self.pos-self.plot_len - self._shift()
             self.end = self.pos
 
+    def _shift(self) :
+        try:
+            if self.segments[0][0] in {"S", "H"}:
+                shift = self.segments[0][1]
+                logging.warning(
+                    f"Read starting with a clip, shifted by -{shift} : {self}")
+            else:
+                shift = 0
+        except IndexError:  # cas où le cigar == "*"
+            shift = 0
+
+        return shift
 
     def plot(self, ax:plt.axes, ypos:int, **kwargs) :
         """
@@ -123,7 +135,7 @@ class Read():
         else :
             color = MAPQ_COLORS(self.mapQ)
 
-        cursor_pos = self.pos
+        cursor_pos = self.start
 
         # defining colors and widths for the different types of segments
         colors = {"H" : "black", "S" : "grey", "D" : "red", "I" : "green"}
@@ -157,6 +169,10 @@ class Read():
                 )
             else :
                 head_length = 4 if i==0 else 0 # tracing the arrow head only for the tip of the read
+                # for reverse reads, the position of clipped reads has to be shifted 
+                # if i == 0 and operation in {"S", "H"} : 
+                #     cursor_pos -= length
+                #     logging.warning(f"Shifting read {self} by -{length}")
                 ax.arrow(
                     x=cursor_pos+length+drift, y=ypos, dx=-length, 
                     dy=0, width=width, head_width=head_width, 
@@ -180,7 +196,7 @@ class Read():
         return False
 
     def __str__(self) -> str:
-        return f"{self.chr}:{self.start}-{self.end} {self.cigar}"
+        return f"{self.chr}:{self.pos} {self.cigar} forward={self.is_forward}"
 
 def parse_position(pos:str) :
     """
@@ -229,10 +245,10 @@ def get_reads_from(bam_file, position, samtools_command="samtools", samtools_opt
         raise Exception("position argument expected either a tuple or a string")
 
     samtools = f"{samtools_command} view {samtools_options} {bam_file} {chrom}:{start}-{end}"
-    print(samtools)
     sam = sp.Popen(samtools.split() , stdout=sp.PIPE, stderr=sp.PIPE)
     cut_command = "cut -f 2,3,4,5,6,7,8,10,11"
     cut = sp.Popen(cut_command.split(), stdin=sam.stdout, stdout=sp.PIPE)
+    logging.info(f"Exceuting command '{samtools} | {cut_command}'")
     for line in cut.stdout.readlines() :
         yield Read(line.decode()) 
 
@@ -294,12 +310,15 @@ def plot_region(
             padding = READ_SPACING
         else :
             padding = 0
+        
+        logging.info(f"Padding : {padding}")
         rightmosts = [] # this will keep track of rightmost positions
         i = 0
         for r in reads :
             for j, right_pos in enumerate(rightmosts) :
                 if right_pos + padding < r.start :
                     rightmosts[j] = r.start+r.plot_len
+                    logging.info(f"Placing read : {r} @ y={j} x={r.start}")
                     r.plot(ax, j)
                     i = j
                     break
@@ -308,6 +327,7 @@ def plot_region(
             else :
                 # if the loop didn't break
                 rightmosts.append(r.start+r.plot_len)
+                logging.info(f"Placing read : {r} @ y={i} x={min(rightmosts)}")
                 r.plot(ax, i)
                         
     elif piling == "seq" :
