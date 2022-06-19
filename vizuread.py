@@ -5,7 +5,11 @@ import matplotlib.pyplot as plt
 from matplotlib import cm
 import logging
 
-from get_reads import sum_as_string
+from get_reads import sum_as_string, MyType
+
+
+class A(MyType) :
+    pass
 
 class ReadException(Exception):
     """base exception for the read errors"""
@@ -373,3 +377,4 @@ def plot_transloc(
 
 if __name__ == "__main__" :
     print(sum_as_string(1,2))
+    print(help(MyType(5)))

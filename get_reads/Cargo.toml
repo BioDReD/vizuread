@@ -12,3 +12,6 @@ crate-type = ["dylib"]
 [dependencies.cpython]
 version = "0.7"
 features = ["extension-module"]
+
+[dependencies]
+noodles = { version = "0.22.0", features = ["bam", "core", "sam"] }
