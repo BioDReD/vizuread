@@ -255,7 +255,7 @@ def get_reads_from(bam_file, position, samtools_command="samtools", samtools_opt
 
 def plot_region(
     bam_file:str=None, region:str=None, ax:plt.Axes=None, 
-    reads=[], samtools_command="samtools", samtools_options="", 
+    reads=None, samtools_command="samtools", samtools_options="", 
     piling="spaced", **kwargs) :
     """
     Plots reads from a specific region on a matplotlib ax. Returns the list of Read objects.
@@ -295,7 +295,7 @@ def plot_region(
 
     if ax is None : raise Exception("ax must be defined")
 
-    if reads == [] :
+    if reads is None :
         if bam_file is None : raise Exception(f"bam_file must be defined")
 
         # consuming the generator into a list so we can return it
